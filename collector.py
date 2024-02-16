@@ -3,11 +3,10 @@ import os
 from flask import Flask
 import socket
 import daemon
+from config import resource_name, service_name
 
 app = Flask(__name__)
 host_name = socket.gethostname()
-resource_name = "eimmo-batch-vms"
-service_name = "eimmo-batch-vms-worker3"
 
 
 def get_machine_cpu():
@@ -149,16 +148,9 @@ def view_fd_default():
         return str(e), 500
 
 
-@app.route('/metric/cpu')
-def view_cpu():
-    import psutil
-    keys = {"azure_vm_cpu_percent": {"instance": "", "metric": "cpu_percent", "resource": resource_name, "service": service_name}}
-    
-    metrics = []
-    
+def generate_registry(datas, keys):
     registry = CollectorRegistry()
-    
-    datas = {"azure_vm_cpu_percent": psutil.cpu_percent()}
+
     for key in keys.keys():
         label = keys[key]
         label["instance"] = host_name
@@ -166,6 +158,19 @@ def view_cpu():
         gauge = Gauge(key, key, label.keys(), registry=registry)
         label_values = label.values()
         gauge.labels(*label_values).set(metric_num)
+    return registry
+
+
+@app.route('/metric/cpu')
+def view_cpu():
+    import psutil
+    keys = {"azure_vm_cpu_percent": {"instance": "", "metric": "cpu_percent", "resource": resource_name, "service": service_name}}
+    
+    metrics = []
+    
+    datas = {"azure_vm_cpu_percent": psutil.cpu_percent()}
+
+    registry = generate_registry(datas=datas, keys=keys)
     metric = generate_latest(registry=registry)
     metrics.append(metric.decode('utf-8'))
     
@@ -222,7 +227,6 @@ def view_memory():
     
     metrics = []
     
-    registry = CollectorRegistry()
     total = mem.total
     used = mem.used
     used_percent = (used / total) * 100
@@ -230,14 +234,9 @@ def view_memory():
     datas = {"azure_vm_mem_total": total,
              "azure_vm_mem_used": used,
              "azure_vm_mem_used_percent": used_percent}
-    
-    for key in keys.keys():
-        label = keys[key]
-        label["instance"] = host_name
-        metric_num = datas[key]
-        gauge = Gauge(key, key, label.keys(), registry=registry)
-        label_values = label.values()
-        gauge.labels(*label_values).set(metric_num)
+
+    registry = generate_registry(datas=datas, keys=keys)
+
     metric = generate_latest(registry=registry)
     metrics.append(metric.decode('utf-8'))
     

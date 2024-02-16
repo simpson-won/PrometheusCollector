@@ -11,3 +11,4 @@ Werkzeug==3.0.1
 zipp==3.17.0
 python-daemon
 daemon
+Flask-APScheduler==1.13.1
