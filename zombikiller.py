@@ -5,6 +5,7 @@ from config import zombi_name, check_interval_sec, zombi_log_file
 import subprocess
 import daemon
 import logging
+from logging.handlers import RotatingFileHandler
 import argparse
 
 app = Flask(__name__)
@@ -13,8 +14,18 @@ scheduler = APScheduler()
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-fh = logging.FileHandler(zombi_log_file)
-logger.addHandler(fh)
+fh = logging
+# fh = logging.FileHandler(zombi_log_file)
+rfh = logging.handlers.RotatingFileHandler(
+    filename=zombi_log_file,
+    mode="a",
+    maxBytes=5*1024*1024,
+    backupCount=2,
+    encoding=None,
+    delay=False
+)
+
+logger.addHandler(rfh)
 
 
 def get_docker_ps() -> list:
@@ -93,7 +104,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.daemon == 1:
-        with daemon.DaemonContext(files_preserve=[fh.stream, ],):
+        with daemon.DaemonContext(files_preserve=[rfh.stream, ],):
             main()
     else:
         main()
