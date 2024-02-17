@@ -1,13 +1,20 @@
 from flask import Flask
 
 from flask_apscheduler import APScheduler
-from config import zombi_name, check_interval_sec
+from config import zombi_name, check_interval_sec, zombi_log_file
 import subprocess
 import daemon
+import logging
+import argparse
 
 app = Flask(__name__)
 
 scheduler = APScheduler()
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+fh = logging.FileHandler(zombi_log_file)
+logger.addHandler(fh)
 
 
 def get_docker_ps() -> list:
@@ -20,8 +27,10 @@ def get_docker_ps() -> list:
                 if len(line) > 10:
                     id_list.append(line.split(' ')[0])
         id_list.remove("CONTAINER")
-    except Exception:
-        print('')
+    except subprocess.SubprocessError:
+        pass
+    finally:
+        pass
     return id_list
 
 
@@ -37,31 +46,35 @@ def get_ps():
                 if len(line) > 1:
                     ps_infos = line.split()
                     if len(ps_infos) > 1:
-                        print(f'ps_infos = {ps_infos}')
                         docker_id = ps_infos[14][0:12]
                         pid = ps_infos[1]
-                        print(f'{cnt} : pid       = {pid}')
-                        print(f'{cnt} : docker_id = {docker_id}')
-                        pid_map[docker_id]=pid
+                        pid_map[docker_id] = pid
                 cnt += 1
-    except Exception as e:
-        print('')
+    except subprocess.SubprocessError:
+        pass
+    finally:
+        pass
     return pid_map
+
+
+def kill_zombi(pid):
+    cmd = f"/usr/bin/kill -9 {pid}"
+    subprocess.check_output(cmd, shell=True, text=True)
 
 
 @scheduler.task('interval', id='check_zombi', seconds=check_interval_sec)
 def check_zombi():
-    print(f'This job is executed every 10 seconds. = {zombi_name}')
+    logging.info(f'This job is executed every {check_interval_sec} seconds.[kill zombi of "{zombi_name}"]')
     id_list = get_docker_ps()
-    print(f'id_list = {id_list}')
     pid_map = get_ps()
-    print(f'pid_map = {pid_map}')
     kill_id_list = []
-    for id in id_list:
-        if id not in pid_map.keys():
-            kill_id_list.append(id)
+    keys = pid_map.keys()
+    for key in keys:
+        if key not in id_list:
+            kill_id_list.append(pid_map.get(key))
     for kill_id in kill_id_list:
-        print(f'kill_id = {kill_id}')
+        logging.info(f'zombi_id = {kill_id}')
+        kill_zombi(kill_id)
 
 
 def main():
@@ -71,5 +84,16 @@ def main():
 
 
 if __name__ == '__main__':
-    with daemon.DaemonContext():
+    file_name = f'python {__name__}'
+    parser = argparse.ArgumentParser(
+        prog=file_name,
+        description='check daemon and kill it.')
+    parser.add_argument('-d', '--daemon', type=int, default=1,
+                        help='An integer which means daemon or not. Default values is 1.')
+    args = parser.parse_args()
+
+    if args.daemon == 1:
+        with daemon.DaemonContext(files_preserve=[fh.stream, ],):
+            main()
+    else:
         main()
