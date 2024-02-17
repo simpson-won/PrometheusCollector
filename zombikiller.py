@@ -14,8 +14,6 @@ scheduler = APScheduler()
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-fh = logging
-# fh = logging.FileHandler(zombi_log_file)
 rfh = logging.handlers.RotatingFileHandler(
     filename=zombi_log_file,
     mode="a",
