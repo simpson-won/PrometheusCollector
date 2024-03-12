@@ -5,6 +5,7 @@ import socket
 import daemon
 from config import resource_name, service_name
 
+
 app = Flask(__name__)
 host_name = socket.gethostname()
 
@@ -18,6 +19,16 @@ def get_machine_cpu():
 @app.route('/about')
 def about():
     return "metric_collector for vm\n", 200
+
+
+@app.route('/metric/mongodb')
+def get_mongodb():
+    from mongodb import get_mongo_metrics
+    ret_val = get_mongo_metrics(resource_name=resource_name, service_name=service_name, host_name=host_name)
+    
+    if len(ret_val) > 0:
+        return ret_val, 100
+    return "have no data", 500
 
 
 @app.route('/metric/docker')
@@ -159,6 +170,14 @@ def generate_registry(datas, keys):
         label_values = label.values()
         gauge.labels(*label_values).set(metric_num)
     return registry
+
+
+def get_mongostat():
+    from pymongo import MongoClient
+    uri="mongodb://admin1:bluewhale0321!@dev-db-vm01.koreacentral.cloudapp.azure.com:37027,dev-db-vm02.koreacentral.cloudapp.azure.com:37027"
+    client = MongoClient(uri)
+    client.get_database('admin').command('serverStatus')
+    
 
 
 @app.route('/metric/cpu')
