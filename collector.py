@@ -4,6 +4,7 @@ from flask import Flask
 import socket
 import daemon
 from config import resource_name, service_name
+import argparse
 
 
 app = Flask(__name__)
@@ -268,5 +269,16 @@ def main():
 
 
 if __name__ == '__main__':
-    with daemon.DaemonContext():
+    file_name = f'python {__name__}'
+    parser = argparse.ArgumentParser(
+        prog=file_name,
+        description='collect the system metrics')
+    parser.add_argument('-d', '--daemon', type=int, default=1,
+                        help='An integer which means daemon or not. Default values is 1.')
+    args = parser.parse_args()
+
+    if args.daemon == 1:
+        with daemon.DaemonContext():
+            main()
+    else:
         main()
