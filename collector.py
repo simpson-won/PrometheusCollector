@@ -28,7 +28,7 @@ def get_mongodb():
     ret_val = get_mongo_metrics(resource_name=resource_name, service_name=service_name, host_name=host_name)
     
     if len(ret_val) > 0:
-        return ret_val, 100
+        return "\n".join(ret_val), 200
     return "have no data", 500
 
 
