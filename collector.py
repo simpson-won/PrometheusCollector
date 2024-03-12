@@ -29,6 +29,7 @@ def get_mongodb():
     
     if len(ret_val) > 0:
         return "\n".join(ret_val), 200
+
     return "have no data", 500
 
 
