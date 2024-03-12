@@ -13,3 +13,4 @@ python-daemon
 daemon
 Flask-APScheduler==1.13.1
 argparse==1.4.0
+pymongo==4.6.2
