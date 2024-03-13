@@ -13,6 +13,7 @@ def get_mongo_metrics(resource_name, service_name, host_name):
     extra_info_st = status['extra_info']
     network_st = status['network']
     opcounters_st = status['opcounters']
+    oplatencies_st = status['opLatencies']
     
     key_vals = {
         "mongodb_mem_bits":
@@ -82,6 +83,14 @@ def get_mongo_metrics(resource_name, service_name, host_name):
             extra_info_st['involuntary_context_switches']],
         "mongodb_extra_info_threads":
             [{"instance": "", "metric": "threads", "resource": resource_name, "service": service_name}, extra_info_st['threads']],
+        "mongodb_oplatencies_reads_latency":
+            [{"instance": "", "metric": "reads_latency", "resource": resource_name, "service": service_name}, oplatencies_st['reads']['latency']],
+        "mongodb_oplatencies_reads_ops":
+            [{"instance": "", "metric": "reads_latency", "resource": resource_name, "service": service_name}, oplatencies_st['reads']['ops']],
+        "mongodb_oplatencies_writes_latency":
+            [{"instance": "", "metric": "writes_latency", "resource": resource_name, "service": service_name}, oplatencies_st['writes']['latency']],
+        "mongodb_oplatencies_writes_ops":
+            [{"instance": "", "metric": "writes_latency", "resource": resource_name, "service": service_name}, oplatencies_st['writes']['ops']],
     }
     
     metrics = []
