@@ -105,5 +105,5 @@ def get_mongo_metrics(resource_name, service_name, host_name):
         gauge.labels(*label_values).set(metric_num)
         metric = generate_latest(registry=registry)
         metrics.append(metric.decode('utf-8'))
-    
+
     return metrics

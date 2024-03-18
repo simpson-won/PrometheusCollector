@@ -5,8 +5,6 @@ import socket
 import daemon
 from config import resource_name, service_name
 import argparse
-
-
 app = Flask(__name__)
 host_name = socket.gethostname()
 
@@ -22,15 +20,25 @@ def about():
     return "metric_collector for vm\n", 200
 
 
+@app.route('/metric/redis')
+def get_redis():
+    from module.redis import get_redis_metric
+    
+    ret_val = get_redis_metric(resource_name=resource_name, host_name=host_name)
+    
+    if len(ret_val) > 0:
+        return "\n".join(ret_val), 200
+    return "empty data", 500
+
 @app.route('/metric/mongodb')
 def get_mongodb():
-    from mongodb import get_mongo_metrics
+    from module.mongodb import get_mongo_metrics
     ret_val = get_mongo_metrics(resource_name=resource_name, service_name=service_name, host_name=host_name)
     
     if len(ret_val) > 0:
         return "\n".join(ret_val), 200
-
-    return "have no data", 500
+    
+    return "empty data", 500
 
 
 @app.route('/metric/docker')
@@ -51,7 +59,7 @@ def view_docker_ps_cnt():
 
 
 @app.route('/metric/containerd')
-def view_cotainerd_cnt():
+def view_containerd_cnt():
     import subprocess
     cmd = "/usr/bin/ps -adef|/usr/bin/grep 'containerd-shim-runc-v2'|/usr/bin/grep -v 'grep'|/usr/bin/wc -l"
     keys = {"azure_vm_containerd_count": {"instance": "", "metric": "containerd_count", "resource": resource_name, "service": service_name}}
@@ -163,7 +171,7 @@ def view_fd_default():
 
 def generate_registry(datas, keys):
     registry = CollectorRegistry()
-
+    
     for key in keys.keys():
         label = keys[key]
         label["instance"] = host_name
@@ -176,10 +184,9 @@ def generate_registry(datas, keys):
 
 def get_mongostat():
     from pymongo import MongoClient
-    uri="mongodb://admin1:bluewhale0321!@dev-db-vm01.koreacentral.cloudapp.azure.com:37027,dev-db-vm02.koreacentral.cloudapp.azure.com:37027"
+    uri = "mongodb://admin1:bluewhale0321!@dev-db-vm01.koreacentral.cloudapp.azure.com:37027,dev-db-vm02.koreacentral.cloudapp.azure.com:37027"
     client = MongoClient(uri)
     client.get_database('admin').command('serverStatus')
-    
 
 
 @app.route('/metric/cpu')
@@ -190,7 +197,7 @@ def view_cpu():
     metrics = []
     
     datas = {"azure_vm_cpu_percent": psutil.cpu_percent()}
-
+    
     registry = generate_registry(datas=datas, keys=keys)
     metric = generate_latest(registry=registry)
     metrics.append(metric.decode('utf-8'))
@@ -255,9 +262,9 @@ def view_memory():
     datas = {"azure_vm_mem_total": total,
              "azure_vm_mem_used": used,
              "azure_vm_mem_used_percent": used_percent}
-
+    
     registry = generate_registry(datas=datas, keys=keys)
-
+    
     metric = generate_latest(registry=registry)
     metrics.append(metric.decode('utf-8'))
     
@@ -276,10 +283,20 @@ if __name__ == '__main__':
         description='collect the system metrics')
     parser.add_argument('-d', '--daemon', type=int, default=1,
                         help='An integer which means daemon or not. Default values is 1.')
+    parser.add_argument('-c', '--redis_cron', type=int, default=0,
+                        help='An integer which means to use cron daemon. Default values is 0.')
     args = parser.parse_args()
-
+    
+    if args.redis_cron == 1:
+        from module.redis import init_redis_cron_lock
+        init_redis_cron_lock()
+    
     if args.daemon == 1:
         with daemon.DaemonContext():
             main()
     else:
         main()
+
+    if args.redis_cron == 1:
+        from module.redis import fint_redis_cron_lock
+        fint_redis_cron_lock()
