@@ -1,23 +1,24 @@
 from elasticsearch import Elasticsearch
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-from datetime import datetime
-from lib.syncmanager import SMManagerPutDeco
+from datetime import datetime, timedelta, timezone
 from config import els_address, slack_channel_name
 
 slack_token = ""
+
+KST = timezone(timedelta(hours=9))
 
 esl_query = {
     "bool": {
         "must": {
             "match": {
-                "log.level": "INFO"
+                "log.level": "ERROR"
             }
         },
         "filter": {
             "range": {
                 "@timestamp": {
-                    "gte": "now-40s", "lt": "now"
+                    "gte": "now-30s", "lt": "now"
                 }
             }
         }
@@ -25,15 +26,16 @@ esl_query = {
 }
 
 
-slack_msg_format = "[\tSystem = {system}\n\tLevel = {level}\n\tMsg = {msg}\n\tDate = {date}\n]"
+slack_msg_format = "[\n\tSystem = {system}\n\tLevel = {level}\n\tMsg = {msg}\n\tDate = {date}\n]"
 
 
 def send_msg(system: str, level: str, msg: str):
     with WebClient(token=slack_token) as client:
         try:
+            text = slack_msg_format.format(system=system, level=level, msg=msg, date=datetime.now(KST))
             response = client.chat_postMessage(
                 channel=slack_channel_name,
-                text=slack_msg_format.join(system=system, level=level, msg=msg, date=datetime.now()))
+                text=text)
             print(response)
         except SlackApiError as e:
             assert e.response["error"]
@@ -57,12 +59,9 @@ def get_errors(els_uri: str) -> int:
     return cnt
 
 
-@SMManagerPutDeco
 def synchronize_metric() -> dict:
-    metrics = {}
-    cnt = get_errors(els_address)
-    # metrics[f"{redis[2]}:{redis[3]}"] = get_metric(host=redis[2], port=int(redis[3]), user=redis[0], passwd=redis[1], is_ssl=redis_use_ssl)
-    return metrics
+    get_errors(els_address)
+    return {}
 
 
 def run():
