@@ -12,5 +12,4 @@ half_minute_task = "els_alarm"
 redis_hosts = ":tester:20.41.87.218:6379"
 redis_use_ssl = False
 els_address = "http://localhost:9200"
-slack_token = "test_token"
 slack_channel_name = "alpha-eimmo"

@@ -24,3 +24,8 @@ root@eimmo-batch-vms-worker2:/etc/systemd/system# systemctl daemon-reload
 root@eimmo-batch-vms-worker2:/etc/systemd/system# systemctl enable collector
 root@eimmo-batch-vms-worker2:/etc/systemd/system# systemctl start collector
 ```
+
+## When you send slack message
+```shell
+SLACK_API_TOKEN=abcdefghijklmn python collector_cron.py
+```

@@ -3,7 +3,9 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from datetime import datetime
 from lib.syncmanager import SMManagerPutDeco
-from config import els_address, slack_token, slack_channel_name
+from config import els_address, slack_channel_name
+
+slack_token = ""
 
 esl_query = {
     "bool": {
@@ -64,4 +66,7 @@ def synchronize_metric() -> dict:
 
 
 def run():
+    import os
+    global slack_token
+    slack_token = os.environ["SLACK_API_TOKEN"]
     synchronize_metric()
