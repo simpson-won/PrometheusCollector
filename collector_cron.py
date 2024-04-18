@@ -1,7 +1,7 @@
 from flask import Flask
 
 from flask_apscheduler import APScheduler
-from config import one_minute_task
+from config import one_minute_task, half_minute_task
 import daemon
 import logging
 from logging.handlers import RotatingFileHandler
@@ -42,6 +42,20 @@ def one_minute_task_01_internal():
     for task in task_list:
         run_op = class_from_file(f"./cron_task/{task}.py")
         run_op()
+
+
+def half_minute_task_01_internal():
+    logging.info(f'half_minute_task_01 : started')
+    task_list = half_minute_task.split(',')
+    
+    for task in task_list:
+        run_op = class_from_file(f"./cron_task/{task}.py")
+        run_op()
+
+
+@scheduler.task('interval', id='half_minute_task_01', seconds=30)
+def half_minute_task_01():
+    half_minute_task_01_internal()
 
 
 @scheduler.task('interval', id='one_minute_task_01', seconds=60)
