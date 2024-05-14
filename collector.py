@@ -1,7 +1,10 @@
 from flask import Flask
 import daemon
 import argparse
+
 app = Flask(__name__)
+
+from view import *
 
 
 def main():
@@ -21,6 +24,7 @@ if __name__ == '__main__':
     
     if args.redis_cron == 1:
         from service.redis import init_redis_cron_lock
+        
         init_redis_cron_lock()
     
     if args.daemon == 1:
@@ -28,7 +32,8 @@ if __name__ == '__main__':
             main()
     else:
         main()
-
+    
     if args.redis_cron == 1:
         from service.redis import fint_redis_cron_lock
+        
         fint_redis_cron_lock()

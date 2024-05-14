@@ -13,7 +13,7 @@ from collector import app
 
 
 app.add_url_rule('/about', view_func=about)
-app.add_url_rule('/metric/mysql/<str:db_name>/<str:table_name>', 'get_mysql', view_func=get_mysql)
+app.add_url_rule('/metric/mysql/<db_name>/<table_name>', view_func=get_mysql)
 app.add_url_rule('/metric/redis', view_func=get_redis)
 app.add_url_rule('/metric/mongodb', view_func=get_mongodb)
 app.add_url_rule('/metric/docker', view_func=view_docker_ps_cnt)
