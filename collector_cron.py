@@ -28,7 +28,7 @@ logger.addHandler(rfh)
 
 
 def class_from_file(file_path: str) -> []:
-    spec = spec_from_file_location('module.name', file_path)
+    spec = spec_from_file_location('service.name', file_path)
     module = module_from_spec(spec)
     spec.loader.exec_module(module)
     run_op = getattr(module, "run")

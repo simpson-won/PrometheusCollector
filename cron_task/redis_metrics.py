@@ -3,9 +3,6 @@ from config import redis_hosts, redis_use_ssl
 from lib.syncmanager import SMManagerPutDeco
 
 
-mongo_metric_dict = {}
-
-
 def get_metric(host: str, port: int, user: str, passwd: str, is_ssl: bool = False):
     with StrictRedis(socket_timeout=5, password=passwd, host=host, port=port, username=user if len(user) > 0 else None, ssl=is_ssl) as conn:
         infos = conn.info()

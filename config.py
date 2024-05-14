@@ -13,3 +13,6 @@ redis_hosts = ":tester:20.41.87.218:6379"
 redis_use_ssl = False
 els_address = "http://localhost:9200"
 slack_channel_name = "alpha-eimmo"
+mysql_host = "172.0.0.1"
+mysql_user = "tester"
+mysql_password = "tester"

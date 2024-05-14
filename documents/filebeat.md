@@ -28,19 +28,17 @@ filebeat.inputs:
 #    - /var/lib/docker/containers/*/*.log
 #  json.key_under_root: root
 - type: filestream
-#  # Unique ID among all inputs, an ID is required.
+  # Unique ID among all inputs, an ID is required.
   id: backend-imageproxy01-vm
   # Change to true to enable this input configuration.
   enabled: true
   # Paths that should be crawled and fetched. Glob based paths.
   paths:
     - /var/lib/docker/containers/*/*.log
-    #- /var/log/*.log
-    #- c:\programdata\elasticsearch\logs\*
   parsers:
     - ndjson:
-target: "log"
-message_key: message
+        target: "log"
+        message_key: message
   #  - multiline:
   #      type: count
   #      count_lines: 3
@@ -149,20 +147,20 @@ setup.kibana:
 
 # ---------------------------- Elasticsearch Output ----------------------------
 output.elasticsearch:
- # Array of hosts to connect to.
-hosts: ["backend-common-els-01.koreacentral.cloudapp.azure.com:9200"]
+  # Array of hosts to connect to.
+  hosts: ["backend-common-els-01.koreacentral.cloudapp.azure.com:9200"]
 
- # Performance preset - one of "balanced", "throughput", "scale",
- # "latency", or "custom".
+  # Performance preset - one of "balanced", "throughput", "scale",
+  # "latency", or "custom".
 #  preset: balanced
 
- # Protocol - either `http` (default) or `https`.
- #protocol: "https"
+  # Protocol - either `http` (default) or `https`.
+  #protocol: "https"
 
- # Authentication credentials - either API key or username/password.
- #api_key: "id:api_key"
- #username: "elastic"
- #password: "changeme"
+  # Authentication credentials - either API key or username/password.
+  #api_key: "id:api_key"
+  #username: "elastic"
+  #password: "changeme"
 
 # ------------------------------ Logstash Output -------------------------------
 #output.logstash:
@@ -180,12 +178,12 @@ hosts: ["backend-common-els-01.koreacentral.cloudapp.azure.com:9200"]
  #ssl.key: "/etc/pki/client/cert.key"
 # ================================= Processors =================================
 processors:
-- add_host_metadata:
-when.not.contains.tags: forwarded
-- dissect:
-tokenizer: "%{+log.timestamp} %{+log.thread} %{log.level} %{?log.msg}"
-field: "log.log"
-target_prefix: ""
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - dissect:
+      tokenizer: "%{+log.timestamp} %{+log.thread} %{log.level} %{?log.msg}"
+      field: "log.log"
+      target_prefix: ""
  #- add_cloud_metadata: ~
  #- add_docker_metadata: ~
  #- add_kubernetes_metadata: ~

@@ -2,7 +2,7 @@ r'''Parse strings using a specification based on the Python format() syntax.
 
    ``parse()`` is the opposite of ``format()``
 
-The module is set up to only export ``parse()``, ``search()``, ``findall()``,
+The service is set up to only export ``parse()``, ``search()``, ``findall()``,
 and ``with_pattern()`` when ``import \*`` is used:
 
 >>> from parse import *
@@ -712,7 +712,7 @@ def date_convert(
     elif tz:
         tz = tz.strip()
         if tz.isupper():
-            # TODO use the awesome python TZ module?
+            # TODO use the awesome python TZ service?
             pass
         else:
             sign = tz[0]
@@ -1367,7 +1367,7 @@ def parse(format, string, extra_types=None, evaluate_result=True, case_sensitive
 
     If the format is invalid a ValueError will be raised.
 
-    See the module documentation for the use of "extra_types".
+    See the service documentation for the use of "extra_types".
 
     In the case there is no match parse() will return None.
     """
@@ -1408,7 +1408,7 @@ def search(
 
     If the format is invalid a ValueError will be raised.
 
-    See the module documentation for the use of "extra_types".
+    See the service documentation for the use of "extra_types".
 
     In the case there is no match parse() will return None.
     """
@@ -1448,7 +1448,7 @@ def findall(
 
     If the format is invalid a ValueError will be raised.
 
-    See the module documentation for the use of "extra_types".
+    See the service documentation for the use of "extra_types".
     """
     p = Parser(format, extra_types=extra_types, case_sensitive=case_sensitive)
     return p.findall(string, pos, endpos, evaluate_result=evaluate_result)
@@ -1466,7 +1466,7 @@ def compile(format, extra_types=None, case_sensitive=False):
     Use this function if you intend to parse many strings
     with the same format.
 
-    See the module documentation for the use of "extra_types".
+    See the service documentation for the use of "extra_types".
 
     Returns a Parser instance.
     """

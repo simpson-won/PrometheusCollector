@@ -2,9 +2,9 @@ from multiprocessing.managers import SyncManager
 
 from prometheus_client import CollectorRegistry, Gauge, generate_latest
 
-sync_manager: SyncManager = None
+from lib.util import text_to_num
 
-mongo_metric_dict = {}
+sync_manager: SyncManager = None
 
 
 class SyncManager(SyncManager):
@@ -27,37 +27,6 @@ def init_redis_cron_lock():
 def fint_redis_cron_lock():
     from lib.syncmanager import fint_redis_cron_lock
     fint_redis_cron_lock()
-
-
-decimal_degree = {
-    'K': 3,
-    'M': 6,
-    'G': 9,
-    'T': 12,
-    'P': 15,
-    'E': 18,
-    'Z': 21,
-    'Y': 24,
-}
-
-
-def text_to_num(text):
-    if len(text) == 0 or text == " ":
-        return 0
-    elif text[-1] =="B":
-        return int(text[:-1])
-    elif text[-1] in decimal_degree:
-        num, magnitude = text[:-1], text[-1]
-        return float(num) * 10 ** decimal_degree[magnitude]
-    elif text[-1] == "%":
-        return float(text[:-1])
-    else:
-        if text[0].isalpha() and text[-1].isalpha():
-            return None
-        if "." in text:
-            return float(text)
-        else:
-            return int(text)
 
 
 def get_redis_metric(resource_name: str, host_name: str) -> list:
@@ -107,7 +76,8 @@ def get_redis_metric(resource_name: str, host_name: str) -> list:
             "redis_allocator_allocated": [
                 {"instance": "", "metric": "allocator_allocated", "resource": resource_name, "service": key}, metric['allocator_allocated']],
             "redis_allocator_active": [{"instance": "", "metric": "allocator_active", "resource": resource_name, "service": key}, metric['allocator_active']],
-            "redis_allocator_resident":[{"instance": "", "metric": "allocator_resident", "resource": resource_name, "service": key}, metric['allocator_resident']],
+            "redis_allocator_resident": [{"instance": "", "metric": "allocator_resident", "resource": resource_name, "service": key},
+                                         metric['allocator_resident']],
             "redis_total_system_memory": [
                 {"instance": "", "metric": "total_system_memory", "resource": resource_name, "service": key}, metric['total_system_memory']],
             "redis_total_system_memory_human": [
@@ -159,7 +129,7 @@ def get_redis_metric(resource_name: str, host_name: str) -> list:
             "redis_reply_buffer_shrinks":
                 [{"instance": "", "metric": "reply_buffer_shrinks", "resource": resource_name, "service": key}, metric['reply_buffer_shrinks']],
             "redis_role":
-                [{"instance": "", "metric": "role", "resource": resource_name, "service": key}, metric['role']=='master'],
+                [{"instance": "", "metric": "role", "resource": resource_name, "service": key}, metric['role'] == 'master'],
             "redis_repl_backlog_size":
                 [{"instance": "", "metric": "repl_backlog_size", "resource": resource_name, "service": key}, metric['repl_backlog_size']],
             "redis_used_cpu_sys":
