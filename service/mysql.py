@@ -4,7 +4,8 @@ from prometheus_client import CollectorRegistry, Gauge, generate_latest
 from lib.util import text_to_num
 
 
-def get_information_schema(rg_name: str, host: str, user: str, password: str, table_name: str, db: str):
+def get_information_schema(rg_name: str, host: str, user: str, password: str, table_name: str, db: str) -> []:
+    metrics = []
     results = []
     
     sql = f'select * from information_schema.tables where table_name="{table_name}" and table_schema="{db}"'
@@ -12,14 +13,7 @@ def get_information_schema(rg_name: str, host: str, user: str, password: str, ta
     con = pymysql.connect(host = host, user=user, password=password, db=db)
     cursor = con.cursor()
     cursor.execute(sql)
-    
-    """
-    TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, ENGINE, VERSION, ROW_FORMAT, TABLE_ROWS, AVG_ROW_LENGTH, DATA_LENGTH, MAX_DATA_LENGTH, INDEX_LENGTH,
-     DATA_FREE, AUTO_INCREMENT, CREATE_TIME, UPDATE_TIME, CHECK_TIME, TABLE_COLLATION, CHECKSUM, CREATE_OPTIONS, TABLE_COMMENT
-    """
 
-    registry = CollectorRegistry()
-   
     for cur in cursor:
         result = {"version": cur[5],
                   "table_rows": cur[7],
@@ -33,6 +27,7 @@ def get_information_schema(rg_name: str, host: str, user: str, password: str, ta
 
     for result in results:
         for key in result.keys():
+            registry = CollectorRegistry()
             label = {"resource": rg_name, "db_addr": host, "db_name": db, "table_name": table_name, "metric": key}
             gauge = Gauge(key, key, label.keys(), registry=registry)
             metric_num = result[key]
@@ -40,5 +35,7 @@ def get_information_schema(rg_name: str, host: str, user: str, password: str, ta
                 metric_num = text_to_num(metric_num)
             labels_values = label.values()
             gauge.labels(*labels_values).set(metric_num)
-    metric = generate_latest(registry=registry)
-    return metric
+            metric = generate_latest(registry=registry)
+            metrics.append(metric.decode('utf-8'))
+            
+    return metrics

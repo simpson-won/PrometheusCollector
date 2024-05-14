@@ -10,21 +10,24 @@ from collector import app
 host_name = socket.gethostname()
 
 
-@app.route('/about')
 def about():
     return "metric_collector for vm\n", 200
 
 
-@app.route('/metrics/mysql/{db_name}/{table_name}')
 def get_mysql(db_name: str, table_name: str):
     from service.mysql import get_information_schema
     
-    metrics = get_information_schema(rg_name=resource_name, host=mysql_host, user=mysql_user, password=mysql_password)
+    metrics = get_information_schema(rg_name=resource_name,
+                                     host=mysql_host,
+                                     user=mysql_user,
+                                     password=mysql_password,
+                                     table_name=table_name,
+                                     db=db_name)
     
     if len(metrics) != 1:
         return "empty data", 404
     
-    return metrics, 200
+    return "\n".join(metrics), 200
 
 
 def get_machine_cpu():
@@ -33,7 +36,6 @@ def get_machine_cpu():
     print(f'{cpu}')
 
 
-@app.route('/metric/redis')
 def get_redis():
     from service.redis import get_redis_metric
     
@@ -44,7 +46,6 @@ def get_redis():
     return "empty data", 500
 
 
-@app.route('/metric/mongodb')
 def get_mongodb():
     from service.mongodb import get_mongo_metrics
     ret_val = get_mongo_metrics(resource_name=resource_name, service_name=service_name, host_name=host_name)
@@ -55,7 +56,6 @@ def get_mongodb():
     return "empty data", 500
 
 
-@app.route('/metric/docker')
 def view_docker_ps_cnt():
     import subprocess
     keys = {"azure_vm_docker_count": {"instance": "", "metric": "docker_count", "resource": resource_name, "service": service_name}}
@@ -72,7 +72,6 @@ def view_docker_ps_cnt():
     return metric.decode('utf-8'), 200
 
 
-@app.route('/metric/containerd')
 def view_containerd_cnt():
     import subprocess
     cmd = "/usr/bin/ps -adef|/usr/bin/grep 'containerd-shim-runc-v2'|/usr/bin/grep -v 'grep'|/usr/bin/wc -l"
@@ -89,7 +88,6 @@ def view_containerd_cnt():
     return metric.decode('utf-8'), 200
 
 
-@app.route('/metric/docker-abnormal')
 def view_docker_ps_abnormal_cnt():
     import subprocess
     keys = {"azure_vm_docker_abnormal_count": {"instance": "", "metric": "docker_abnormal_count", "resource": resource_name, "service": service_name}}
@@ -106,7 +104,6 @@ def view_docker_ps_abnormal_cnt():
     return metric.decode('utf-8'), 200
 
 
-@app.route('/metric/process')
 def view_process_cnt():
     import subprocess
     keys = {"azure_vm_process_count": {"instance": "", "metric": "process_count", "resource": resource_name, "service": service_name}}
@@ -167,7 +164,6 @@ def view_fd_internal(cmd_type: int):
     return metric.decode('utf-8'), 200
 
 
-@app.route('/metric/fd/<cmd_type>')
 def view_fd(cmd_type: int):
     try:
         return view_fd_internal(cmd_type)
@@ -175,7 +171,6 @@ def view_fd(cmd_type: int):
         return str(e), 500
 
 
-@app.route('/metric/fd')
 def view_fd_default():
     try:
         return view_fd_internal(2)
@@ -203,7 +198,6 @@ def get_mongostat():
     client.get_database('admin').command('serverStatus')
 
 
-@app.route('/metric/cpu')
 def view_cpu():
     import psutil
     keys = {"azure_vm_cpu_percent": {"instance": "", "metric": "cpu_percent", "resource": resource_name, "service": service_name}}
@@ -220,7 +214,6 @@ def view_cpu():
     return metric_str, 200
 
 
-@app.route('/metric/disk')
 def view_disk():
     import psutil
     
@@ -255,7 +248,6 @@ def view_disk():
     return metric_str, 200
 
 
-@app.route('/metric/memory')
 def view_memory():
     import psutil
     
