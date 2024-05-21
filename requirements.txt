@@ -16,6 +16,6 @@ argparse==1.4.0
 pymongo==4.7.2
 python-redis-lock==4.0.0
 redis==5.0.4
-elsaticsearch
 slack_sdk
 pymysql
+#elsaticsearch
