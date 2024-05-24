@@ -7,7 +7,7 @@ from view.allview import view_containerd_cnt
 from view.allview import view_docker_ps_abnormal_cnt
 from view.allview import view_process_cnt
 from view.allview import view_fd, view_fd_default
-from view.allview import view_cpu, view_disk, view_memory
+from view.allview import view_cpu, view_disk, view_memory, view_file_size
 
 from collector import app
 
@@ -25,3 +25,4 @@ app.add_url_rule('/metric/fd', view_func=view_fd_default)
 app.add_url_rule('/metric/cpu', view_func=view_cpu)
 app.add_url_rule('/metric/disk', view_func=view_disk)
 app.add_url_rule('/metric/memory', view_func=view_memory)
+app.add_url_rule('/metric/file_size/<file_name_path>', view_file_size)

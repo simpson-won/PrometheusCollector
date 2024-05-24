@@ -4,10 +4,10 @@ from config import resource_name, service_name
 from config import mysql_host, mysql_user, mysql_password
 import socket
 
-from collector import app
+from lib.prometheus_metric_util import generate_registry, generate_gauge
+from lib.sys_metric_util import get_fd_cnt_by_ps, get_fd_cnt_by_lsof
 
-
-host_name = socket.gethostname()
+host_name: str = socket.gethostname()
 
 
 def about():
@@ -58,15 +58,14 @@ def get_mongodb():
 
 def view_docker_ps_cnt():
     import subprocess
-    keys = {"azure_vm_docker_count": {"instance": "", "metric": "docker_count", "resource": resource_name, "service": service_name}}
-    metric_num = subprocess.check_output("/usr/bin/ps -adef|/usr/bin/grep 'docker run'|/usr/bin/grep -Ewv 'ps|grep'|/usr/bin/wc -l", shell=True, text=True)
+    cmd = "/usr/bin/ps -adef|/usr/bin/grep 'docker run'|/usr/bin/grep -Ewv 'ps|grep'|/usr/bin/wc -l"
+    key = "azure_vm_docker_count"
+    label = {"instance": "", "metric": "docker_count", "resource": resource_name, "service": service_name}
+    
+    metric_num = subprocess.check_output(cmd, shell=True, text=True)
     registry = CollectorRegistry()
     
-    label = keys["azure_vm_docker_count"]
-    label["instance"] = host_name
-    gauge = Gauge("azure_vm_docker_count", "azure_vm_docker_count", label.keys(), registry=registry)
-    label_values = label.values()
-    gauge.labels(*label_values).set(metric_num)
+    generate_gauge(key=key, label=label, value=metric_num, registry=registry, host_name=host_name)
     metric = generate_latest(registry=registry)
     
     return metric.decode('utf-8'), 200
@@ -75,14 +74,14 @@ def view_docker_ps_cnt():
 def view_containerd_cnt():
     import subprocess
     cmd = "/usr/bin/ps -adef|/usr/bin/grep 'containerd-shim-runc-v2'|/usr/bin/grep -v 'grep'|/usr/bin/wc -l"
-    keys = {"azure_vm_containerd_count": {"instance": "", "metric": "containerd_count", "resource": resource_name, "service": service_name}}
+    key = "azure_vm_containerd_count"
+    label = {"instance": "", "metric": "containerd_count", "resource": resource_name, "service": service_name}
+    
     metric_num = subprocess.check_output(cmd, shell=True, text=True)
     registry = CollectorRegistry()
-    label = keys["azure_vm_containerd_count"]
-    label["instance"] = host_name
-    gauge = Gauge("azure_vm_containerd_count", "azure_vm_containerd_count", label.keys(), registry=registry)
-    label_values = label.values()
-    gauge.labels(*label_values).set(metric_num)
+    
+    generate_gauge(key=key, label=label, value=metric_num, registry=registry, host_name=host_name)
+    
     metric = generate_latest(registry=registry)
     
     return metric.decode('utf-8'), 200
@@ -90,15 +89,14 @@ def view_containerd_cnt():
 
 def view_docker_ps_abnormal_cnt():
     import subprocess
-    keys = {"azure_vm_docker_abnormal_count": {"instance": "", "metric": "docker_abnormal_count", "resource": resource_name, "service": service_name}}
     cmd = "/usr/bin/docker ps --filter=status=exited --filter=status=created |/usr/bin/wc -l"
+    key = "azure_vm_docker_abnormal_count"
+    label = {"instance": "", "metric": "docker_abnormal_count", "resource": resource_name, "service": service_name}
+    
     metric_num = subprocess.check_output(cmd, shell=True, text=True)
     registry = CollectorRegistry()
-    label = keys["azure_vm_docker_abnormal_count"]
-    label["instance"] = host_name
-    gauge = Gauge("azure_vm_docker_abnormal_count", "azure_vm_docker_abnormal_count", label.keys(), registry=registry)
-    label_values = label.values()
-    gauge.labels(*label_values).set(metric_num)
+    
+    generate_gauge(key=key, label=label, value=metric_num, registry=registry, host_name=host_name)
     metric = generate_latest(registry=registry)
     
     return metric.decode('utf-8'), 200
@@ -106,46 +104,21 @@ def view_docker_ps_abnormal_cnt():
 
 def view_process_cnt():
     import subprocess
-    keys = {"azure_vm_process_count": {"instance": "", "metric": "process_count", "resource": resource_name, "service": service_name}}
-    metric_num = subprocess.check_output("/usr/bin/ps -adef|/usr/bin/grep -Ewv 'ps |grep' |/usr/bin/wc -l", shell=True, text=True)
+    cmd = "/usr/bin/ps -adef|/usr/bin/grep -Ewv 'ps |grep' |/usr/bin/wc -l"
+    key = "azure_vm_process_count"
+    label = {"instance": "", "metric": "process_count", "resource": resource_name, "service": service_name}
+    metric_num = subprocess.check_output(cmd, shell=True, text=True)
     registry = CollectorRegistry()
     
-    label = keys["azure_vm_process_count"]
-    label["instance"] = host_name
-    gauge = Gauge("azure_vm_process_count", "azure_vm_process_count", label.keys(), registry=registry)
-    label_values = label.values()
-    gauge.labels(*label_values).set(metric_num)
+    generate_gauge(key=key, label=label, value=metric_num, registry=registry, host_name=host_name)
     metric = generate_latest(registry=registry)
     
     return metric.decode('utf-8'), 200
 
 
-def get_folder_count(pid: str) -> int:
-    path = f"/proc/{pid}/fd"
-    folder_count = sum([len(folder) for r, d, folder in os.walk(path)])
-    return folder_count
-
-
-def get_fd_cnt_by_ps():
-    import subprocess
-    cmd = "/usr/bin/ps -adef|/usr/bin/grep -Ewv 'grep|ps '|/usr/bin/awk '{print $2}'"
-    pids_str = subprocess.check_output(cmd, shell=True, text=True)
-    pids = pids_str.split("\n")
-    folder_num = 0
-    for pid in pids:
-        if len(pid) > 0 and pid.isdecimal():
-            folder_num += get_folder_count(pid)
-    
-    return folder_num
-
-
-def get_fd_cnt_by_lsof():
-    import subprocess
-    return subprocess.check_output("/usr/bin/lsof|/usr/bin/grep -Ewv 'grep|lsof'|/usr/bin/wc -l", shell=True, text=True)
-
-
 def view_fd_internal(cmd_type: int):
-    keys = {"azure_vm_opened_fd_count": {"instance": "", "metric": "opened_fd_count", "resource": resource_name, "service": service_name, "cmd_type": cmd_type}}
+    key = "azure_vm_opened_fd_count"
+    label = {"instance": "", "metric": "opened_fd_count", "resource": resource_name, "service": service_name, "cmd_type": cmd_type}
     
     if cmd_type == 1:
         metric_num = get_fd_cnt_by_lsof()
@@ -154,11 +127,7 @@ def view_fd_internal(cmd_type: int):
     
     registry = CollectorRegistry()
     
-    label = keys["azure_vm_opened_fd_count"]
-    label["instance"] = host_name
-    gauge = Gauge("azure_vm_opened_fd_count", "azure_vm_opened_fd_count", label.keys(), registry=registry)
-    label_values = label.values()
-    gauge.labels(*label_values).set(metric_num)
+    generate_gauge(key=key, label=label, value=metric_num, registry=registry, host_name=host_name)
     metric = generate_latest(registry=registry)
     
     return metric.decode('utf-8'), 200
@@ -178,40 +147,15 @@ def view_fd_default():
         return str(e), 500
 
 
-def generate_registry(datas, keys):
-    registry = CollectorRegistry()
-    
-    for key in keys.keys():
-        label = keys[key]
-        label["instance"] = host_name
-        metric_num = datas[key]
-        gauge = Gauge(key, key, label.keys(), registry=registry)
-        label_values = label.values()
-        gauge.labels(*label_values).set(metric_num)
-    return registry
-
-
-def get_mongostat():
-    from pymongo import MongoClient
-    uri = "mongodb://admin1:bluewhale0321!@dev-db-vm01.koreacentral.cloudapp.azure.com:37027,dev-db-vm02.koreacentral.cloudapp.azure.com:37027"
-    client = MongoClient(uri)
-    client.get_database('admin').command('serverStatus')
-
-
 def view_cpu():
     import psutil
-    keys = {"azure_vm_cpu_percent": {"instance": "", "metric": "cpu_percent", "resource": resource_name, "service": service_name}}
-    
-    metrics = []
-    
+    key = "azure_vm_cpu_percent"
+    label = {"instance": "", "metric": "cpu_percent", "resource": resource_name, "service": service_name}
     datas = {"azure_vm_cpu_percent": psutil.cpu_percent()}
-    
-    registry = generate_registry(datas=datas, keys=keys)
+    registry = CollectorRegistry()
+    generate_gauge(key=key, label=label, value=datas, registry=registry, host_name=host_name)
     metric = generate_latest(registry=registry)
-    metrics.append(metric.decode('utf-8'))
-    
-    metric_str = "\n".join(metrics)
-    return metric_str, 200
+    return metric.decode('utf-8'), 200
 
 
 def view_disk():
@@ -269,10 +213,24 @@ def view_memory():
              "azure_vm_mem_used": used,
              "azure_vm_mem_used_percent": used_percent}
     
-    registry = generate_registry(datas=datas, keys=keys)
+    registry = generate_registry(datas=datas, keys=keys, host_name=host_name)
     
     metric = generate_latest(registry=registry)
     metrics.append(metric.decode('utf-8'))
     
     metric_str = "\n".join(metrics)
     return metric_str, 200
+
+
+def view_file_size(file_name_path: str):
+    file_name_path = file_name_path.replace("__", "/")
+    file_size = os.path.getsize(file_name_path)
+    key = "file_size"
+    label = {"instance": "", "metric": "cpu_percent", "resource": resource_name, "service": service_name, "filename": file_name_path}
+    
+    registry = CollectorRegistry()
+    
+    generate_gauge(key=key, label=label, value=int(file_size), registry=registry, host_name=host_name)
+    
+    metric = generate_latest(registry=registry)
+    return metric.decode('utf-8'), 200

@@ -107,3 +107,10 @@ def get_mongo_metrics(resource_name, service_name, host_name):
         metrics.append(metric.decode('utf-8'))
 
     return metrics
+
+
+def get_mongostat():
+    from pymongo import MongoClient
+    uri = "mongodb://admin1:bluewhale0321!@dev-db-vm01.koreacentral.cloudapp.azure.com:37027,dev-db-vm02.koreacentral.cloudapp.azure.com:37027"
+    client = MongoClient(uri)
+    client.get_database('admin').command('serverStatus')
