@@ -37,5 +37,7 @@ def get_information_schema(rg_name: str, host: str, user: str, password: str, ta
             gauge.labels(*labels_values).set(metric_num)
             metric = generate_latest(registry=registry)
             metrics.append(metric.decode('utf-8'))
+    cursor.close()
+    con.close()
             
     return metrics

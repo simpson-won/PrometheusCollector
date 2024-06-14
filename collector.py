@@ -4,10 +4,11 @@ import argparse
 
 app = Flask(__name__)
 
-from view import *
+from view import add_url_rules
 
 
 def main():
+    add_url_rules(app)
     app.run(host="0.0.0.0", port=5001)
 
 

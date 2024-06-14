@@ -151,9 +151,9 @@ def view_cpu():
     import psutil
     key = "azure_vm_cpu_percent"
     label = {"instance": "", "metric": "cpu_percent", "resource": resource_name, "service": service_name}
-    datas = {"azure_vm_cpu_percent": psutil.cpu_percent()}
+    # datas = {"azure_vm_cpu_percent": psutil.cpu_percent()}
     registry = CollectorRegistry()
-    generate_gauge(key=key, label=label, value=datas, registry=registry, host_name=host_name)
+    generate_gauge(key=key, label=label, value=psutil.cpu_percent(), registry=registry, host_name=host_name)
     metric = generate_latest(registry=registry)
     return metric.decode('utf-8'), 200
 
